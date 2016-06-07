@@ -4,20 +4,31 @@
 	xsi:schemaLocation="http://www.springframework.org/schema/beans 
 						http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-	<bean id="framework" class="com.demo.rpc.framework.RpcFramework">
-		<property name="port" value="10086"></property>
-	</bean>
-
-	<!-- 需要发布的接口 -->
-	<bean id="helloService" class="com.demo.rpc.service.HelloServiceImpl" />
-
-	<!-- 发布服务 -->
-	<bean id="helloService_server" class="com.demo.rpc.provider.RpcProvider" init-method="export">
-		<property name="framework" ref="framework"></property>
-		<property name="services">
-			<list>
-				<ref bean="helloService"/>
-			</list>
+	<!-- 注册中心配置 -->
+	<bean id="registry" class="com.light.rpc.registry.RegistryService">
+		<property name="zookeeper">
+			<bean id="zookeeper" class="com.light.rpc.registry.ZookeeperClient">
+				<constructor-arg name="address" value="192.168.155.108:2181" />
+				<constructor-arg name="timeout" value="2000" />
+			</bean>
 		</property>
 	</bean>
+	
+	<bean id="config" class="com.light.rpc.server.ProviderConfig">
+		<property name="group" value="beijing"></property>
+	</bean>
+
+	<!-- 发布服务 -->
+	<bean id="exportService" class="com.light.rpc.server.ServerTransport">
+		<property name="registry" ref="registry" />
+		<property name="providerConfig" ref="config"></property>
+		<property name="serviceMap">
+			<map><!-- 服务列表 -->
+				<entry key="com.light.rpc.export.HelloService"><bean class="com.light.rpc.service.HelloServiceImpl"></bean></entry>
+				<entry key="com.light.rpc.export.HiService"><bean class="com.light.rpc.service.HiServiceImpl"></bean></entry>
+			</map>
+		</property>
+	</bean>
+
+	
 </beans>

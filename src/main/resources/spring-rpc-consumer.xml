@@ -4,33 +4,36 @@
 	xsi:schemaLocation="http://www.springframework.org/schema/beans 
 						http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-	<bean id="framework" class="com.demo.rpc.framework.RpcFramework">
-		<property name="port" value="10086"></property>
+	<!-- 注册中心配置 -->
+	<bean id="registry" class="com.light.rpc.registry.RegistryService">
+		<property name="zookeeper">
+			<bean id="zookeeper" class="com.light.rpc.registry.ZookeeperClient">
+				<constructor-arg name="address" value="192.168.155.108:2181" />
+				<constructor-arg name="timeout" value="2000" />
+			</bean>
+		</property>
 	</bean>
 
-	<bean id="consumer_master" class="com.demo.rpc.consumer.RpcConsumerImpl">
-		<property name="framework" ref="framework"></property>
-		<property name="host" value="主ip"></property>
+	<bean id="config" class="com.light.rpc.consumer.ConsumerConfig">
+		<property name="group" value="beijing" />
+	</bean>
+
+	<!-- 拉取服务配置 -->
+	<bean id="subscript" class="com.light.rpc.consumer.ConsumerTransport">
+		<property name="registry" ref="registry" />
+		<property name="consumerConfig" ref="config"></property>
 	</bean>
 	
-	<bean id="consumer_slave_1" class="com.demo.rpc.consumer.RpcConsumerImpl">
-		<property name="framework" ref="framework"></property>
-		<property name="host" value="从ip1"></property>
+	<!-- 订阅服务 -->
+	<bean id="helloServiceRpc" class="com.light.rpc.consumer.RpcProxyFactoy" factory-method="getRpcServerProxy">
+		<constructor-arg index="0" ref="config" />
+		<constructor-arg index="1" value="com.light.rpc.export.HelloService" />
 	</bean>
 	
-	<bean id="consumer_slave_2" class="com.demo.rpc.consumer.RpcConsumerImpl">
-		<property name="framework" ref="framework"></property>
-		<property name="host" value="从ip2"></property>
-	</bean>
-	
-	<bean id="rfb" class="com.demo.rpc.framework.RpcProxyFactoy" factory-method="getRpcServerProxy">
-		<constructor-arg>
-			<map>
-				<entry key="1" value-ref="consumer_master" />
-				<entry key="2" value-ref="consumer_slave_1" />
-				<entry key="2" value-ref="consumer_slave_2" />
-			</map>
-        </constructor-arg>
+	<!-- 订阅服务 -->
+	<bean id="hiServiceRpc" class="com.light.rpc.consumer.RpcProxyFactoy" factory-method="getRpcServerProxy">
+		<constructor-arg index="0" ref="config" />
+		<constructor-arg index="1" value="com.light.rpc.export.HiService" />
 	</bean>
 	
 </beans>
